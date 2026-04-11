@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Visualizador de Búsquedas</title>
+  <link rel="preconnect" href="https://api.fontshare.com" />
+  <link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700,900&display=swap" rel="stylesheet" />
+  <style>
+    :root, [data-theme="light"] {
+      --text-xs: clamp(0.75rem, 0.7rem + 0.25vw, 0.875rem);
+      --text-sm: clamp(0.875rem, 0.8rem + 0.35vw, 1rem);
+      --text-base: clamp(1rem, 0.95rem + 0.25vw, 1.125rem);
+      --text-lg: clamp(1.125rem, 1rem + 0.75vw, 1.5rem);
+      --text-xl: clamp(1.5rem, 1.2rem + 1.25vw, 2.25rem);
+      --space-1: 0.25rem; --space-2: 0.5rem; --space-3: 0.75rem; --space-4: 1rem; --space-5: 1.25rem; --space-6: 1.5rem; --space-8: 2rem; --space-10: 2.5rem; --space-12: 3rem;
+      --color-bg: #f4f1ea; --color-surface: #fcfbf8; --color-surface-2: #ffffff; --color-surface-offset: #ece8df; --color-border: #d7d0c5; --color-divider: #e4ddd2;
+      --color-text: #221f1a; --color-text-muted: #6f6b63; --color-text-faint: #b6afa2; --color-text-inverse: #f9f8f4;
+      --color-primary: #0d7c86; --color-primary-hover: #0c5f66; --color-primary-highlight: #d5e7e9;
+      --color-success: #4d9b50; --color-warning: #b86a2d; --color-error: #b24b8d; --color-blue: #4f7cff; --color-orange: #ff8a3d;
+      --radius-sm: 0.375rem; --radius-md: 0.5rem; --radius-lg: 0.875rem; --radius-xl: 1.2rem; --radius-full: 9999px;
+      --shadow-sm: 0 10px 20px color-mix(in oklab, var(--color-text) 5%, transparent); --shadow-md: 0 18px 38px color-mix(in oklab, var(--color-primary) 10%, transparent); --shadow-lg: 0 24px 50px color-mix(in oklab, var(--color-primary) 14%, transparent);
+      --transition: 180ms cubic-bezier(0.16, 1, 0.3, 1);
+      --font-body: 'Satoshi', Inter, sans-serif;
+      --font-display: 'Satoshi', Inter, sans-serif;
+      --bar-min: 14px;
+      --label-opacity: 1;
+    }
+    [data-theme="dark"] {
+      --color-bg: #141516; --color-surface: #1b1d20; --color-surface-2: #222529; --color-surface-offset: #2a2d32; --color-border: #33383e; --color-divider: #2a2d31;
+      --color-text: #ece7dd; --color-text-muted: #bab1a2; --color-text-faint: #726b60; --color-text-inverse: #101214;
+      --color-primary: #6fc3cb; --color-primary-hover: #4aa8b0; --color-primary-highlight: #22363a;
+      --color-success: #7acb7f; --color-warning: #f0a15c; --color-error: #dc7fb8; --color-blue: #7a95ff; --color-orange: #ffaf6a;
+      --shadow-sm: 0 10px 20px oklch(0 0 0 / 0.2); --shadow-md: 0 18px 38px oklch(0 0 0 / 0.3); --shadow-lg: 0 24px 50px oklch(0 0 0 / 0.4);
+    }
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body { margin: 0; min-height: 100%; }
+    body {
+      font-family: var(--font-body);
+      font-size: var(--text-base);
+      background:
+        radial-gradient(circle at top right, color-mix(in oklab, var(--color-primary) 16%, transparent), transparent 28%),
+        radial-gradient(circle at bottom left, color-mix(in oklab, var(--color-blue) 10%, transparent), transparent 22%),
+        var(--color-bg);
+      color: var(--color-text);
+      line-height: 1.5;
+    }
+    button, input, select { font: inherit; }
+    button { cursor: pointer; }
+    .app { max-width: 1440px; margin: 0 auto; padding: var(--space-6); display: grid; gap: var(--space-6); }
+    .topbar {
+      display: flex; justify-content: space-between; align-items: center; gap: var(--space-4); flex-wrap: wrap;
+      padding: var(--space-4) var(--space-5);
+      border: 1px solid color-mix(in oklab, var(--color-text) 10%, transparent);
+      border-radius: var(--radius-xl);
+      background: color-mix(in oklab, var(--color-surface) 94%, white 6%);
+      backdrop-filter: blur(12px);
+      box-shadow: var(--shadow-sm);
+    }
+    .brand { display: flex; align-items: center; gap: var(--space-3); }
+    .logo {
+      width: 46px; height: 46px; border-radius: 14px;
+      background: linear-gradient(135deg, var(--color-primary), color-mix(in oklab, var(--color-primary) 62%, var(--color-blue) 38%));
+      display: grid; place-items: center; color: white; box-shadow: var(--shadow-md); flex: 0 0 auto;
+    }
+    .brand h1 { margin: 0; font-size: var(--text-xl); line-height: 1.05; }
+    .brand p { margin: 0; color: var(--color-text-muted); font-size: var(--text-sm); }
+    .theme-btn, .action-btn, .algo-btn {
+      border: 1px solid color-mix(in oklab, var(--color-text) 12%, transparent);
+      background: var(--color-surface-2);
+      color: var(--color-text);
+      border-radius: var(--radius-lg);
+      padding: 0.85rem 1rem;
+      transition: transform var(--transition), background var(--transition), border-color var(--transition), color var(--transition), box-shadow var(--transition);
+      box-shadow: 0 8px 16px color-mix(in oklab, var(--color-text) 4%, transparent);
+    }
+    .theme-btn:hover, .action-btn:hover, .algo-btn:hover { transform: translateY(-2px); box-shadow: var(--shadow-sm); }
+    .layout { display: grid; grid-template-columns: 360px 1fr; gap: var(--space-6); align-items: start; }
+    .panel, .canvas-panel, .stats-panel, .legend-panel {
+      background: color-mix(in oklab, var(--color-surface) 94%, white 6%);
+      border: 1px solid color-mix(in oklab, var(--color-text) 10%, transparent);
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow-sm);
+    }
+    .panel { padding: var(--space-5); display: grid; gap: var(--space-5); position: sticky; top: var(--space-6); }
+    .group { display: grid; gap: var(--space-3); }
+    .group h2, .canvas-panel h2, .stats-panel h2, .legend-panel h2 { font-size: var(--text-lg); margin: 0; }
+    .control-grid { display: grid; gap: var(--space-4); }
+    label { font-size: var(--text-sm); color: var(--color-text-muted); display: grid; gap: var(--space-2); }
+    input[type="number"], input[type="range"], select { width: 100%; }
+    input[type="number"], select {
+      background: var(--color-surface-2); color: var(--color-text);
+      border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: 0.95rem 1rem;
+    }
+    input[type="range"] { accent-color: var(--color-primary); }
+    .inline-info { display: flex; justify-content: space-between; gap: var(--space-3); font-size: var(--text-sm); color: var(--color-text-muted); flex-wrap: wrap; }
+    .actions, .algos, .quick-stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-3); }
+    .action-btn.primary, .algo-btn.active { background: var(--color-primary); color: var(--color-text-inverse); border-color: transparent; }
+    .action-btn.warn { background: color-mix(in oklab, var(--color-warning) 14%, var(--color-surface)); }
+    .algo-btn small { display: block; opacity: 0.8; font-size: var(--text-xs); margin-top: 0.2rem; }
+    .workspace { display: grid; gap: var(--space-5); }
+    .canvas-panel, .stats-panel, .legend-panel { padding: var(--space-5); }
+    .canvas-header { display: flex; justify-content: space-between; gap: var(--space-4); align-items: center; flex-wrap: wrap; margin-bottom: var(--space-4); }
+    .status-pill { padding: 0.6rem 0.9rem; border-radius: var(--radius-full); font-size: var(--text-sm); background: var(--color-primary-highlight); color: var(--color-primary); font-weight: 700; }
+    .array-shell {
+      border-radius: var(--radius-xl);
+      border: 1px solid color-mix(in oklab, var(--color-text) 10%, transparent);
+      background: linear-gradient(180deg, color-mix(in oklab, var(--color-surface-2) 92%, transparent), color-mix(in oklab, var(--color-surface-offset) 88%, transparent));
+      box-shadow: inset 0 1px 0 color-mix(in oklab, white 30%, transparent);
+      padding: var(--space-4);
+    }
+    .array-wrapper {
+      min-height: 430px;
+      max-height: 60vh;
+      display: grid;
+      grid-auto-flow: column;
+      grid-auto-columns: minmax(var(--bar-min), 1fr);
+      align-items: end;
+      gap: clamp(2px, 0.45vw, 8px);
+      overflow-x: auto;
+      overflow-y: hidden;
+      scrollbar-width: thin;
+      scrollbar-color: color-mix(in oklab, var(--color-primary) 45%, transparent) transparent;
+      container-type: inline-size;
+      padding-top: 1.8rem;
+      background:
+        linear-gradient(to top, color-mix(in oklab, var(--color-text) 5%, transparent) 1px, transparent 1px),
+        repeating-linear-gradient(to right, color-mix(in oklab, var(--color-text) 4%, transparent) 0 1px, transparent 1px calc(100% / 12));
+      background-size: 100% 20%, 100% 100%;
+      border-radius: calc(var(--radius-xl) - var(--space-4));
+    }
+    .array-wrapper::-webkit-scrollbar { height: 10px; }
+    .array-wrapper::-webkit-scrollbar-thumb { background: color-mix(in oklab, var(--color-primary) 35%, transparent); border-radius: 999px; }
+    .bar {
+      min-width: var(--bar-min);
+      width: 100%;
+      border-radius: 14px 14px 0 0;
+      background: linear-gradient(180deg, color-mix(in oklab, white 30%, var(--color-blue)), color-mix(in oklab, var(--color-blue) 78%, var(--color-primary) 22%));
+      position: relative;
+      transition: height var(--transition), background var(--transition), transform var(--transition), opacity var(--transition), box-shadow var(--transition), filter var(--transition);
+      display: flex; align-items: flex-start; justify-content: center;
+      box-shadow: inset 0 1px 0 color-mix(in oklab, white 45%, transparent), 0 12px 20px color-mix(in oklab, var(--color-blue) 16%, transparent);
+    }
+    .bar::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      background: linear-gradient(180deg, color-mix(in oklab, white 38%, transparent), transparent 40%);
+      pointer-events: none;
+    }
+    .bar span {
+      position: absolute;
+      top: -1.45rem;
+      font-size: clamp(0.62rem, 1.4cqi, 0.76rem);
+      color: var(--color-text-muted);
+      user-select: none;
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+      opacity: var(--label-opacity);
+    }
+    .bar.active { background: linear-gradient(180deg, color-mix(in oklab, white 24%, var(--color-orange)), var(--color-orange)); transform: translateY(-6px) scaleY(1.01); box-shadow: 0 14px 24px color-mix(in oklab, var(--color-orange) 28%, transparent); }
+    .bar.checked { background: linear-gradient(180deg, color-mix(in oklab, white 22%, var(--color-warning)), var(--color-warning)); }
+    .bar.low, .bar.high { background: linear-gradient(180deg, color-mix(in oklab, white 18%, var(--color-blue)), var(--color-blue)); }
+    .bar.range { background: linear-gradient(180deg, color-mix(in oklab, white 20%, var(--color-primary)), color-mix(in oklab, var(--color-primary) 54%, var(--color-blue) 46%)); opacity: 0.95; }
+    .bar.found { background: linear-gradient(180deg, color-mix(in oklab, white 20%, var(--color-success)), var(--color-success)); transform: translateY(-10px) scale(1.03); box-shadow: 0 18px 28px color-mix(in oklab, var(--color-success) 30%, transparent); }
+    .bar.discarded { opacity: 0.18; filter: grayscale(0.35); }
+    .bar.exponential { background: linear-gradient(180deg, color-mix(in oklab, white 18%, var(--color-error)), color-mix(in oklab, var(--color-error) 58%, var(--color-orange) 42%)); }
+    .bar.interpolation { background: linear-gradient(180deg, color-mix(in oklab, white 20%, var(--color-primary)), color-mix(in oklab, var(--color-primary) 58%, var(--color-success) 42%)); }
+    .meta-grid { display: grid; grid-template-columns: 1.2fr 0.8fr; gap: var(--space-5); }
+    .stats-cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-3); margin-top: var(--space-4); }
+    .card {
+      border: 1px solid color-mix(in oklab, var(--color-text) 10%, transparent);
+      background: var(--color-surface-2);
+      border-radius: var(--radius-lg);
+      padding: var(--space-4);
+    }
+    .card strong { display: block; font-size: 1.55rem; margin-top: 0.35rem; font-variant-numeric: tabular-nums lining-nums; }
+    .card span { color: var(--color-text-muted); font-size: var(--text-sm); }
+    .legend { display: grid; gap: var(--space-3); margin-top: var(--space-4); }
+    .legend-item { display: flex; gap: var(--space-3); align-items: center; color: var(--color-text-muted); font-size: var(--text-sm); }
+    .swatch { width: 16px; height: 16px; border-radius: 999px; }
+    .info-note {
+      padding: var(--space-4);
+      background: color-mix(in oklab, var(--color-primary) 8%, var(--color-surface));
+      border: 1px solid color-mix(in oklab, var(--color-primary) 18%, transparent);
+      border-radius: var(--radius-lg);
+      color: var(--color-text-muted);
+      font-size: var(--text-sm);
+    }
+    .steps { margin-top: var(--space-4); display: grid; gap: var(--space-2); max-height: 220px; overflow: auto; padding-right: var(--space-2); }
+    .step { font-size: var(--text-sm); color: var(--color-text-muted); padding: 0.7rem 0.85rem; border-radius: var(--radius-md); background: var(--color-surface-2); border: 1px solid color-mix(in oklab, var(--color-text) 8%, transparent); }
+    .step strong { color: var(--color-text); }
+    @media (max-width: 1100px) {
+      .layout, .meta-grid { grid-template-columns: 1fr; }
+      .panel { position: static; }
+    }
+    @media (max-width: 700px) {
+      .app { padding: var(--space-4); }
+      .actions, .algos, .quick-stats, .stats-cards { grid-template-columns: 1fr; }
+      .array-wrapper { min-height: 300px; --bar-min: 18px; }
+      .bar span { opacity: 0; }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <section class="topbar">
+      <div class="brand">
+        <div class="logo" aria-hidden="true">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-label="Logo de algoritmo">
+            <path d="M5 18L12 6l7 12" />
+            <path d="M8 13h8" />
+          </svg>
+        </div>
+        <div>
+          <h1>Ingenieria de Sistemas </h1>
+          <h2>Visualizador de Búsquedas</h2>
+          <p>Algoritmos y Estructura de Datos - Ing. ALDO HERNAN ZANABRIA GALVEZ</p>
+          <p>-Est. Cristhian Michael JALLO PAREDES</p>
+        </div>
+      </div>
+      <button class="theme-btn" id="themeToggle" aria-label="Cambiar tema">🌙 Tema</button>
+    </section>
+
+    <section class="layout">
+      <aside class="panel">
+        <div class="group">
+          <h2>Configuración</h2>
+          <div class="control-grid">
+            <label>Número a buscar
+              <input id="targetInput" type="number" value="42" />
+            </label>
+            <label>Tamaño del arreglo
+              <input id="sizeRange" type="range" min="8" max="100" value="24" />
+            </label>
+            <div class="inline-info"><span id="sizeLabel">24 elementos</span><span id="sortedState">Desordenado</span></div>
+            <label>Velocidad de reproducción
+              <input id="speedRange" type="range" min="1" max="100" value="50" />
+            </label>
+            <div class="inline-info"><span id="speedLabel">550 ms</span><span>Menor valor = más rápido</span></div>
+          </div>
+        </div>
+
+        <div class="group">
+          <h2>Algoritmo</h2>
+          <div class="algos">
+            <button class="algo-btn active" data-algo="linear">Lineal<small>O(n)</small></button>
+            <button class="algo-btn" data-algo="binary">Binaria<small>O(log n)</small></button>
+            <button class="algo-btn" data-algo="exponential">Exponencial<small>O(log n)</small></button>
+            <button class="algo-btn" data-algo="interpolation">Interpolación<small>Prom. O(log log n)</small></button>
+          </div>
+        </div>
+
+        <div class="group">
+          <h2>Acciones</h2>
+          <div class="actions">
+            <button class="action-btn primary" id="runBtn">▶ Ejecutar</button>
+            <button class="action-btn" id="pauseBtn">⏸ Pausar</button>
+            <button class="action-btn" id="sortBtn">↕ Ordenar</button>
+            <button class="action-btn warn" id="shuffleBtn">🔀 Desordenar</button>
+            <button class="action-btn" id="regenBtn">⟳ Nuevo arreglo</button>
+            <button class="action-btn" id="stepBtn">⏭ Paso</button>
+          </div>
+        </div>
+
+        <div class="info-note">
+          El array se adapta al número de elementos: si son pocos, las barras se ensanchan; si son muchos, se compactan y activan desplazamiento horizontal suave para mantener la visualización clara.
+        </div>
+      </aside>
+
+      <section class="workspace">
+        <div class="canvas-panel">
+          <div class="canvas-header">
+            <div>
+              <h2 id="currentAlgoTitle">Búsqueda lineal</h2>
+              <p id="currentAlgoDesc" style="margin:0;color:var(--color-text-muted)">Recorre elemento por elemento hasta encontrar el objetivo o llegar al final.</p>
+            </div>
+            <div class="status-pill" id="statusPill">Listo para ejecutar</div>
+          </div>
+          <div class="array-shell">
+            <div class="array-wrapper" id="arrayContainer" aria-live="polite"></div>
+          </div>
+        </div>
+
+        <div class="meta-grid">
+          <div class="stats-panel">
+            <h2>Métricas</h2>
+            <div class="stats-cards">
+              <div class="card"><span>Comparaciones</span><strong id="comparisonsValue">0</strong></div>
+              <div class="card"><span>Índice encontrado</span><strong id="indexValue">-</strong></div>
+              <div class="card"><span>Complejidad temporal</span><strong id="timeValue" style="font-size:1.2rem">O(n)</strong></div>
+              <div class="card"><span>Complejidad espacial</span><strong id="spaceValue" style="font-size:1.2rem">O(1)</strong></div>
+            </div>
+            <div class="steps" id="stepsLog"></div>
+          </div>
+
+          <div class="legend-panel">
+            <h2>Leyenda</h2>
+            <div class="legend">
+              <div class="legend-item"><span class="swatch" style="background:var(--color-blue)"></span> Rango activo o límites</div>
+              <div class="legend-item"><span class="swatch" style="background:var(--color-orange)"></span> Elemento en comparación</div>
+              <div class="legend-item"><span class="swatch" style="background:var(--color-success)"></span> Valor encontrado</div>
+              <div class="legend-item"><span class="swatch" style="background:var(--color-warning)"></span> Elemento ya revisado</div>
+              <div class="legend-item"><span class="swatch" style="background:var(--color-error)"></span> Salto o estimación especial</div>
+            </div>
+            <div class="quick-stats" style="margin-top: var(--space-4);">
+              <div class="card"><span>Valor buscado</span><strong id="targetBadge">42</strong></div>
+              <div class="card"><span>Estado del arreglo</span><strong id="arrayStateBadge" style="font-size:1.15rem">No ordenado</strong></div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <script>
+    const state = {
+      array: [], sorted: false, algorithm: 'linear', target: 42, size: 24, delay: 550,
+      comparisons: 0, running: false, paused: false, generator: null, highlights: {}, foundIndex: null
+    };
+
+    const els = {
+      arrayContainer: document.getElementById('arrayContainer'), targetInput: document.getElementById('targetInput'),
+      sizeRange: document.getElementById('sizeRange'), speedRange: document.getElementById('speedRange'), sizeLabel: document.getElementById('sizeLabel'),
+      speedLabel: document.getElementById('speedLabel'), sortedState: document.getElementById('sortedState'), statusPill: document.getElementById('statusPill'),
+      comparisonsValue: document.getElementById('comparisonsValue'), indexValue: document.getElementById('indexValue'), timeValue: document.getElementById('timeValue'),
+      spaceValue: document.getElementById('spaceValue'), stepsLog: document.getElementById('stepsLog'), currentAlgoTitle: document.getElementById('currentAlgoTitle'),
+      currentAlgoDesc: document.getElementById('currentAlgoDesc'), targetBadge: document.getElementById('targetBadge'), arrayStateBadge: document.getElementById('arrayStateBadge'),
+      runBtn: document.getElementById('runBtn'), pauseBtn: document.getElementById('pauseBtn'), sortBtn: document.getElementById('sortBtn'),
+      shuffleBtn: document.getElementById('shuffleBtn'), regenBtn: document.getElementById('regenBtn'), stepBtn: document.getElementById('stepBtn'),
+      themeToggle: document.getElementById('themeToggle')
+    };
+
+    const algoMeta = {
+      linear: { title: 'Búsqueda lineal', desc: 'Recorre elemento por elemento hasta encontrar el objetivo o llegar al final.', time: 'O(n)', space: 'O(1)' },
+      binary: { title: 'Búsqueda binaria', desc: 'Divide el rango a la mitad en cada paso; requiere el arreglo ordenado.', time: 'O(log n)', space: 'O(1)' },
+      exponential: { title: 'Búsqueda exponencial', desc: 'Duplica el rango de búsqueda y luego aplica búsqueda binaria en el intervalo detectado.', time: 'O(log n)', space: 'O(1)' },
+      interpolation: { title: 'Búsqueda por interpolación', desc: 'Estima la posición probable según la distribución de los datos; requiere orden y valores relativamente uniformes.', time: 'Prom. O(log log n) · Peor O(n)', space: 'O(1)' }
+    };
+
+    function randomArray(size) {
+      const arr = Array.from({ length: size }, () => Math.floor(Math.random() * 96) + 5);
+      if (size > 3 && !arr.includes(state.target)) arr[Math.floor(Math.random() * size)] = state.target;
+      return arr;
+    }
+
+    function shuffle(arr) {
+      const clone = [...arr];
+      for (let i = clone.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [clone[i], clone[j]] = [clone[j], clone[i]];
+      }
+      return clone;
+    }
+
+    function setStatus(text) { els.statusPill.textContent = text; }
+    function clearLog() { els.stepsLog.innerHTML = ''; }
+    function logStep(text, strong = '') {
+      const div = document.createElement('div');
+      div.className = 'step';
+      div.innerHTML = strong ? `<strong>${strong}</strong> ${text}` : text;
+      els.stepsLog.prepend(div);
+      while (els.stepsLog.children.length > 18) els.stepsLog.removeChild(els.stepsLog.lastChild);
+    }
+
+    function resetMetrics() {
+      state.comparisons = 0; state.foundIndex = null; state.highlights = {};
+      updateStats(); clearLog();
+    }
+
+    function updateStats() {
+      els.comparisonsValue.textContent = state.comparisons;
+      els.indexValue.textContent = state.foundIndex ?? '-';
+      els.timeValue.textContent = algoMeta[state.algorithm].time;
+      els.spaceValue.textContent = algoMeta[state.algorithm].space;
+      els.targetBadge.textContent = state.target;
+      els.arrayStateBadge.textContent = state.sorted ? 'Ordenado' : 'No ordenado';
+      els.sortedState.textContent = state.sorted ? 'Ordenado' : 'Desordenado';
+    }
+
+    function renderArray() {
+      els.arrayContainer.innerHTML = '';
+      const max = Math.max(...state.array, 1);
+      const total = state.array.length;
+      const minBar = total <= 20 ? 28 : total <= 35 ? 22 : total <= 50 ? 17 : total <= 70 ? 14 : 12;
+      const labelOpacity = total <= 28 ? 1 : total <= 42 ? 0.72 : total <= 56 ? 0.38 : 0;
+      els.arrayContainer.style.setProperty('--bar-min', `${minBar}px`);
+      els.arrayContainer.style.setProperty('--label-opacity', `${labelOpacity}`);
+      state.array.forEach((value, index) => {
+        const bar = document.createElement('div');
+        bar.className = 'bar';
+        bar.style.height = `${Math.max((value / max) * 100, 10)}%`;
+        if (state.highlights.active === index) bar.classList.add('active');
+        if ((state.highlights.checked || []).includes(index)) bar.classList.add('checked');
+        if ((state.highlights.range || []).includes(index)) bar.classList.add('range');
+        if ((state.highlights.discarded || []).includes(index)) bar.classList.add('discarded');
+        if (state.highlights.low === index) bar.classList.add('low');
+        if (state.highlights.high === index) bar.classList.add('high');
+        if ((state.highlights.exponential || []).includes(index)) bar.classList.add('exponential');
+        if ((state.highlights.interpolation || []).includes(index)) bar.classList.add('interpolation');
+        if (state.foundIndex === index) bar.classList.add('found');
+        const label = document.createElement('span');
+        label.textContent = value;
+        bar.appendChild(label);
+        bar.title = `Índice ${index} · Valor ${value}`;
+        els.arrayContainer.appendChild(bar);
+      });
+    }
+
+    function sleep(ms) { return new Promise(resolve => setTimeout(resolve, ms)); }
+    function currentDelay() { return 1200 - Number(els.speedRange.value) * 11; }
+    async function waitTurn() { while (state.paused) await sleep(80); await sleep(state.delay); }
+    function needsSorted(algo) { return ['binary', 'exponential', 'interpolation'].includes(algo); }
+
+    function prepareToRun() {
+      resetMetrics();
+      state.target = Number(els.targetInput.value);
+      if (Number.isNaN(state.target)) state.target = 0;
+      if (needsSorted(state.algorithm) && !state.sorted) {
+        state.array.sort((a, b) => a - b);
+        state.sorted = true;
+        logStep('Se ordenó automáticamente el arreglo porque el algoritmo seleccionado lo requiere.', 'Autoajuste:');
+      }
+      updateStats(); renderArray();
+    }
+
+    async function runGenerator(stepByStep = false) {
+      if (!state.generator) return;
+      state.running = true; state.paused = false;
+      setStatus(stepByStep ? 'Paso ejecutado' : 'Ejecutando');
+      while (state.running) {
+        const { value, done } = state.generator.next();
+        if (done) {
+          state.running = false; state.generator = null;
+          if (state.foundIndex === null) {
+            setStatus('No encontrado');
+            logStep(`El valor ${state.target} no está en el arreglo.`, 'Resultado:');
+          } else {
+            setStatus('Encontrado');
+            logStep(`El valor ${state.target} fue encontrado en el índice ${state.foundIndex}.`, 'Resultado:');
+          }
+          renderArray(); updateStats(); return;
+        }
+        if (value) {
+          if (typeof value.comparisons === 'number') state.comparisons = value.comparisons;
+          if (typeof value.foundIndex === 'number') state.foundIndex = value.foundIndex;
+          state.highlights = value.highlights || {};
+          if (value.message) logStep(value.message, value.label || 'Paso:');
+          renderArray(); updateStats();
+        }
+        if (stepByStep) { state.running = false; setStatus('Pausado'); return; }
+        await waitTurn();
+      }
+    }
+
+    function *linearSearch(arr, target) {
+      let comparisons = 0; const checked = [];
+      for (let i = 0; i < arr.length; i++) {
+        comparisons++; checked.push(i);
+        const found = arr[i] === target;
+        yield { comparisons, foundIndex: found ? i : null, highlights: { active: i, checked: [...checked] }, label: 'Comparación:', message: `Se compara el índice ${i} (valor ${arr[i]}) con el objetivo ${target}.` };
+        if (found) return i;
+      }
+      return null;
+    }
+
+    function *binarySearch(arr, target) {
+      let low = 0, high = arr.length - 1, comparisons = 0;
+      while (low <= high) {
+        const mid = Math.floor((low + high) / 2); comparisons++;
+        const range = Array.from({ length: high - low + 1 }, (_, k) => low + k);
+        const discarded = Array.from({ length: arr.length }, (_, i) => i).filter(i => i < low || i > high);
+        yield { comparisons, foundIndex: arr[mid] === target ? mid : null, highlights: { active: mid, low, high, range, discarded }, label: 'Mitad:', message: `Se evalúa el índice medio ${mid} (valor ${arr[mid]}) dentro del rango [${low}, ${high}].` };
+        if (arr[mid] === target) return mid;
+        if (arr[mid] < target) low = mid + 1; else high = mid - 1;
+      }
+      return null;
+    }
+
+    function *exponentialSearch(arr, target) {
+      let comparisons = 0;
+      if (arr[0] === target) {
+        comparisons++;
+        yield { comparisons, foundIndex: 0, highlights: { active: 0, exponential: [0] }, label: 'Inicio:', message: `Se verifica el primer elemento y coincide con ${target}.` };
+        return 0;
+      }
+      let bound = 1; const jumps = [0];
+      while (bound < arr.length && arr[bound] < target) {
+        comparisons++; jumps.push(bound);
+        yield { comparisons, foundIndex: null, highlights: { active: bound, exponential: [...jumps] }, label: 'Salto:', message: `Se duplica el límite hasta el índice ${bound} (valor ${arr[bound]}).` };
+        bound *= 2;
+      }
+      let low = Math.floor(bound / 2), high = Math.min(bound, arr.length - 1);
+      while (low <= high) {
+        const mid = Math.floor((low + high) / 2); comparisons++;
+        const range = Array.from({ length: high - low + 1 }, (_, k) => low + k);
+        yield { comparisons, foundIndex: arr[mid] === target ? mid : null, highlights: { active: mid, low, high, range, exponential: [...jumps] }, label: 'Binaria:', message: `Dentro del rango detectado [${low}, ${high}] se revisa el índice ${mid} (valor ${arr[mid]}).` };
+        if (arr[mid] === target) return mid;
+        if (arr[mid] < target) low = mid + 1; else high = mid - 1;
+      }
+      return null;
+    }
+
+    function *interpolationSearch(arr, target) {
+      let low = 0, high = arr.length - 1, comparisons = 0;
+      while (low <= high && target >= arr[low] && target <= arr[high]) {
+        if (arr[high] === arr[low]) {
+          comparisons++;
+          yield { comparisons, foundIndex: arr[low] === target ? low : null, highlights: { active: low, low, high, interpolation: [low] }, label: 'Caso especial:', message: `Los valores en low y high son iguales; se compara directamente el índice ${low}.` };
+          return arr[low] === target ? low : null;
+        }
+        const pos = low + Math.floor(((target - arr[low]) * (high - low)) / (arr[high] - arr[low])); comparisons++;
+        const range = Array.from({ length: high - low + 1 }, (_, k) => low + k);
+        yield { comparisons, foundIndex: arr[pos] === target ? pos : null, highlights: { active: pos, low, high, range, interpolation: [pos] }, label: 'Estimación:', message: `Se estima la posición ${pos} usando interpolación; valor actual ${arr[pos]}.` };
+        if (arr[pos] === target) return pos;
+        if (arr[pos] < target) low = pos + 1; else high = pos - 1;
+      }
+      return null;
+    }
+
+    function buildGenerator() {
+      if (state.algorithm === 'linear') return linearSearch(state.array, state.target);
+      if (state.algorithm === 'binary') return binarySearch(state.array, state.target);
+      if (state.algorithm === 'exponential') return exponentialSearch(state.array, state.target);
+      return interpolationSearch(state.array, state.target);
+    }
+
+    function rebuildArray(forceShuffle = false) {
+      state.array = randomArray(state.size);
+      state.sorted = false;
+      if (forceShuffle) state.array = shuffle(state.array);
+      resetMetrics(); updateStats(); renderArray(); setStatus('Arreglo generado');
+    }
+
+    function stopRun() { state.running = false; state.generator = null; }
+
+    document.querySelectorAll('[data-algo]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('[data-algo]').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        state.algorithm = btn.dataset.algo;
+        els.currentAlgoTitle.textContent = algoMeta[state.algorithm].title;
+        els.currentAlgoDesc.textContent = algoMeta[state.algorithm].desc;
+        stopRun(); resetMetrics(); updateStats(); renderArray(); setStatus('Algoritmo seleccionado');
+      });
+    });
+
+    els.targetInput.addEventListener('input', () => {
+      state.target = Number(els.targetInput.value);
+      els.targetBadge.textContent = Number.isNaN(state.target) ? '-' : state.target;
+    });
+
+    els.sizeRange.addEventListener('input', () => {
+      state.size = Number(els.sizeRange.value);
+      els.sizeLabel.textContent = `${state.size} elementos`;
+      rebuildArray(true);
+    });
+
+    els.speedRange.addEventListener('input', () => {
+      state.delay = currentDelay();
+      els.speedLabel.textContent = `${state.delay} ms`;
+    });
+
+    els.sortBtn.addEventListener('click', () => {
+      stopRun(); state.array.sort((a, b) => a - b); state.sorted = true; state.highlights = {};
+      renderArray(); updateStats(); setStatus('Arreglo ordenado'); logStep('El arreglo se ordenó de menor a mayor.', 'Ordenar:');
+    });
+
+    els.shuffleBtn.addEventListener('click', () => {
+      stopRun(); state.array = shuffle(state.array); state.sorted = false; state.highlights = {};
+      renderArray(); updateStats(); setStatus('Arreglo desordenado'); logStep('El arreglo se desordenó aleatoriamente.', 'Desordenar:');
+    });
+
+    els.regenBtn.addEventListener('click', () => rebuildArray(true));
+
+    els.pauseBtn.addEventListener('click', () => {
+      if (!state.generator && !state.running) return;
+      state.paused = !state.paused;
+      setStatus(state.paused ? 'Pausado' : 'Reanudando');
+      els.pauseBtn.textContent = state.paused ? '▶ Reanudar' : '⏸ Pausar';
+    });
+
+    els.runBtn.addEventListener('click', async () => {
+      stopRun(); state.delay = currentDelay(); prepareToRun(); state.generator = buildGenerator();
+      els.pauseBtn.textContent = '⏸ Pausar'; await runGenerator(false);
+    });
+
+    els.stepBtn.addEventListener('click', async () => {
+      if (!state.generator) { stopRun(); prepareToRun(); state.generator = buildGenerator(); }
+      state.delay = 0; await runGenerator(true);
+    });
+
+    els.themeToggle.addEventListener('click', () => {
+      const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', next);
+      els.themeToggle.textContent = next === 'dark' ? '☀ Tema' : '🌙 Tema';
+    });
+
+    (function initTheme() {
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      document.documentElement.setAttribute('data-theme', prefersDark ? 'dark' : 'light');
+      els.themeToggle.textContent = prefersDark ? '☀ Tema' : '🌙 Tema';
+    })();
+
+    state.delay = currentDelay();
+    els.speedLabel.textContent = `${state.delay} ms`;
+    els.sizeLabel.textContent = `${state.size} elementos`;
+    rebuildArray(true);
+    updateStats();
+  </script>
+</body>
+</html>

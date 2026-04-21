@@ -1,0 +1,1112 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Visualizador de Ordenamientos de Pedidos | Ingeniería de Sistemas</title>
+    <link rel="preconnect" href="https://api.fontshare.com" />
+    <link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700,900&display=swap" rel="stylesheet" />
+    <style>
+        :root,
+        [data-theme="light"] {
+            --text-xs: clamp(0.75rem, 0.7rem + 0.25vw, 0.875rem);
+            --text-sm: clamp(0.875rem, 0.8rem + 0.35vw, 1rem);
+            --text-base: clamp(1rem, 0.95rem + 0.25vw, 1.125rem);
+            --text-lg: clamp(1.125rem, 1rem + 0.75vw, 1.5rem);
+            --text-xl: clamp(1.5rem, 1.2rem + 1.25vw, 2.25rem);
+
+            --space-1: 0.25rem;
+            --space-2: 0.5rem;
+            --space-3: 0.75rem;
+            --space-4: 1rem;
+            --space-5: 1.25rem;
+            --space-6: 1.5rem;
+            --space-8: 2rem;
+            --space-10: 2.5rem;
+            --space-12: 3rem;
+
+            --color-bg: #f4f1ea;
+            --color-surface: #fcfbf8;
+            --color-surface-2: #ffffff;
+            --color-surface-offset: #ece8df;
+            --color-border: #d7d0c5;
+            --color-divider: #e4ddd2;
+            --color-text: #221f1a;
+            --color-text-muted: #6f6b63;
+            --color-text-faint: #b6afa2;
+            --color-text-inverse: #f9f8f4;
+
+            --color-primary: #0d7c86;
+            --color-primary-hover: #0c5f66;
+            --color-primary-highlight: #d5e7e9;
+            --color-success: #4d9b50;
+            --color-warning: #b86a2d;
+            --color-error: #b24b8d;
+            --color-blue: #4f7cff;
+            --color-orange: #ff8a3d;
+
+            --radius-sm: 0.375rem;
+            --radius-md: 0.5rem;
+            --radius-lg: 0.875rem;
+            --radius-xl: 1.2rem;
+            --radius-full: 9999px;
+            --shadow-sm: 0 10px 20px color-mix(in oklab, var(--color-text) 5%, transparent);
+            --shadow-md: 0 18px 38px color-mix(in oklab, var(--color-primary) 10%, transparent);
+            --shadow-lg: 0 24px 50px color-mix(in oklab, var(--color-primary) 14%, transparent);
+
+            --transition: 180ms cubic-bezier(0.16, 1, 0.3, 1);
+            --font-body: 'Satoshi', Inter, sans-serif;
+            --font-display: 'Satoshi', Inter, sans-serif;
+            --bar-min: 14px;
+            --label-opacity: 1;
+        }
+
+        [data-theme="dark"] {
+            --color-bg: #141516;
+            --color-surface: #1b1d20;
+            --color-surface-2: #222529;
+            --color-surface-offset: #2a2d32;
+            --color-border: #33383e;
+            --color-divider: #2a2d31;
+            --color-text: #ece7dd;
+            --color-text-muted: #bab1a2;
+            --color-text-faint: #726b60;
+            --color-text-inverse: #101214;
+
+            --color-primary: #6fc3cb;
+            --color-primary-hover: #4aa8b0;
+            --color-primary-highlight: #22363a;
+            --color-success: #7acb7f;
+            --color-warning: #f0a15c;
+            --color-error: #dc7fb8;
+            --color-blue: #7a95ff;
+            --color-orange: #ffaf6a;
+
+            --shadow-sm: 0 10px 20px oklch(0 0 0 / 0.2);
+            --shadow-md: 0 18px 38px oklch(0 0 0 / 0.3);
+            --shadow-lg: 0 24px 50px oklch(0 0 0 / 0.4);
+        }
+
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            margin: 0;
+            min-height: 100vh;
+        }
+
+        body {
+            font-family: var(--font-body);
+            font-size: var(--text-base);
+            background:
+                radial-gradient(circle at top right, color-mix(in oklab, var(--color-primary) 16%, transparent), transparent 28%),
+                radial-gradient(circle at bottom left, color-mix(in oklab, var(--color-blue) 10%, transparent), transparent 22%),
+                var(--color-bg);
+            color: var(--color-text);
+            line-height: 1.5;
+        }
+
+        button,
+        input,
+        select {
+            font: inherit;
+        }
+
+        button {
+            cursor: pointer;
+        }
+
+        .app {
+            max-width: 1720px;
+            margin: 0 auto;
+            padding: var(--space-6);
+        }
+
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: var(--space-4);
+            flex-wrap: wrap;
+            padding: var(--space-4) var(--space-5);
+            border: 1px solid color-mix(in oklab, var(--color-text) 10%, transparent);
+            border-radius: var(--radius-xl);
+            background: color-mix(in oklab, var(--color-surface) 94%, white 6%);
+            backdrop-filter: blur(12px);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+        }
+
+        .logo {
+            width: 46px;
+            height: 46px;
+            border-radius: 14px;
+            background: linear-gradient(135deg, var(--color-primary), color-mix(in oklab, var(--color-primary) 62%, var(--color-blue) 38%));
+            display: grid;
+            place-items: center;
+            color: white;
+            box-shadow: var(--shadow-md);
+            flex: 0 0 auto;
+        }
+
+        .brand h1 {
+            margin: 0;
+            font-size: var(--text-xl);
+            line-height: 1.05;
+        }
+
+        .brand p {
+            margin: 0;
+            color: var(--color-text-muted);
+            font-size: var(--text-sm);
+        }
+
+        .theme-btn,
+        .action-btn,
+        .algo-btn {
+            border: 1px solid color-mix(in oklab, var(--color-text) 12%, transparent);
+            background: var(--color-surface-2);
+            color: var(--color-text);
+            border-radius: var(--radius-lg);
+            padding: 0.85rem 1rem;
+            transition: transform var(--transition), background var(--transition), border-color var(--transition), color var(--transition), box-shadow var(--transition);
+            box-shadow: 0 8px 16px color-mix(in oklab, var(--color-text) 4%, transparent);
+        }
+
+        .theme-btn:hover,
+        .action-btn:hover,
+        .algo-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .top-controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: var(--space-5) var(--space-6);
+            align-items: flex-end;
+            justify-content: center;
+            padding: var(--space-4) var(--space-5);
+            margin-bottom: var(--space-5);
+            background: color-mix(in oklab, var(--color-surface) 94%, white 6%);
+            border: 1px solid color-mix(in oklab, var(--color-text) 10%, transparent);
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .control-group label {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            font-size: 0.8rem;
+            color: var(--color-text-muted);
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 1.3fr;
+            grid-template-rows: auto auto;
+            gap: var(--space-4);
+        }
+
+        @media (max-width: 1300px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .panel,
+        .canvas-panel,
+        .logs-panel,
+        .table-panel {
+            background: color-mix(in oklab, var(--color-surface) 94%, white 6%);
+            border: 1px solid color-mix(in oklab, var(--color-text) 10%, transparent);
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-sm);
+            display: flex;
+            flex-direction: column;
+            padding: var(--space-5);
+        }
+
+        .logs-panel {
+            grid-column: 1 / -1;
+        }
+
+        .canvas-header {
+            display: flex;
+            justify-content: space-between;
+            gap: var(--space-4);
+            align-items: center;
+            flex-wrap: wrap;
+            margin-bottom: var(--space-4);
+        }
+
+        .status-pill {
+            padding: 0.6rem 0.9rem;
+            border-radius: var(--radius-full);
+            font-size: var(--text-sm);
+            background: var(--color-primary-highlight);
+            color: var(--color-primary);
+            font-weight: 700;
+        }
+
+        .array-shell {
+            border-radius: var(--radius-xl);
+            border: 1px solid color-mix(in oklab, var(--color-text) 10%, transparent);
+            background: linear-gradient(180deg, color-mix(in oklab, var(--color-surface-2) 92%, transparent), color-mix(in oklab, var(--color-surface-offset) 88%, transparent));
+            box-shadow: inset 0 1px 0 color-mix(in oklab, white 30%, transparent);
+            padding: var(--space-4);
+        }
+
+        .array-wrapper {
+            min-height: 380px;
+            display: grid;
+            grid-auto-flow: column;
+            grid-auto-columns: minmax(var(--bar-min), 1fr);
+            align-items: end;
+            gap: clamp(2px, 0.45vw, 8px);
+            overflow-x: auto;
+            overflow-y: hidden;
+            scrollbar-width: thin;
+            scrollbar-color: color-mix(in oklab, var(--color-primary) 45%, transparent) transparent;
+            container-type: inline-size;
+            padding-top: 2.2rem;
+            background:
+                linear-gradient(to top, color-mix(in oklab, var(--color-text) 5%, transparent) 1px, transparent 1px),
+                repeating-linear-gradient(to right, color-mix(in oklab, var(--color-text) 4%, transparent) 0 1px, transparent 1px calc(100% / 12));
+            background-size: 100% 20%, 100% 100%;
+            border-radius: calc(var(--radius-xl) - var(--space-4));
+        }
+
+        .array-wrapper::-webkit-scrollbar {
+            height: 10px;
+        }
+
+        .array-wrapper::-webkit-scrollbar-thumb {
+            background: color-mix(in oklab, var(--color-primary) 35%, transparent);
+            border-radius: 999px;
+        }
+
+        .bar {
+            min-width: var(--bar-min);
+            width: 100%;
+            border-radius: 14px 14px 0 0;
+            background: linear-gradient(180deg, color-mix(in oklab, white 30%, var(--color-blue)), color-mix(in oklab, var(--color-blue) 78%, var(--color-primary) 22%));
+            position: relative;
+            transition: height var(--transition), background var(--transition), transform var(--transition), opacity var(--transition), box-shadow var(--transition), filter var(--transition);
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            box-shadow: inset 0 1px 0 color-mix(in oklab, white 45%, transparent), 0 12px 20px color-mix(in oklab, var(--color-blue) 16%, transparent);
+            cursor: default;
+        }
+
+        .bar::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            background: linear-gradient(180deg, color-mix(in oklab, white 38%, transparent), transparent 40%);
+            pointer-events: none;
+        }
+
+        .bar span {
+            position: absolute;
+            top: -1.7rem;
+            font-size: clamp(0.7rem, 1.5cqi, 0.85rem);
+            color: var(--color-text-muted);
+            font-weight: 600;
+            user-select: none;
+            font-variant-numeric: tabular-nums;
+            white-space: nowrap;
+            opacity: var(--label-opacity);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+        }
+        
+        .bar span .id {
+            font-size: 0.65em;
+            color: var(--color-primary);
+            background: color-mix(in oklab, var(--color-primary) 10%, var(--color-surface));
+            padding: 2px 6px;
+            border-radius: 6px;
+        }
+
+        /* Estados visuales */
+        .bar.active {
+            background: linear-gradient(180deg, color-mix(in oklab, white 24%, var(--color-primary)), var(--color-primary));
+            box-shadow: 0 14px 24px color-mix(in oklab, var(--color-primary) 28%, transparent);
+            opacity: 0.9;
+        }
+
+        .bar.compare {
+            background: linear-gradient(180deg, color-mix(in oklab, white 22%, var(--color-warning)), var(--color-warning));
+            transform: translateY(-4px) scaleY(1.02);
+        }
+
+        .bar.swap {
+            background: linear-gradient(180deg, color-mix(in oklab, white 18%, var(--color-error)), color-mix(in oklab, var(--color-error) 58%, var(--color-orange) 42%));
+            transform: translateY(-8px) scaleY(1.03);
+            box-shadow: 0 16px 28px color-mix(in oklab, var(--color-error) 28%, transparent);
+        }
+
+        .bar.sorted {
+            background: linear-gradient(180deg, color-mix(in oklab, white 20%, var(--color-success)), var(--color-success));
+        }
+
+        .meta-grid {
+            display: grid;
+            grid-template-columns: 1.2fr 0.8fr;
+            gap: var(--space-5);
+        }
+
+        .stats-cards {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: var(--space-3);
+            margin-top: var(--space-4);
+        }
+
+        .card {
+            border: 1px solid color-mix(in oklab, var(--color-text) 10%, transparent);
+            background: var(--color-surface-2);
+            border-radius: var(--radius-lg);
+            padding: var(--space-4);
+        }
+
+        .card strong {
+            display: block;
+            font-size: 1.55rem;
+            margin-top: 0.35rem;
+            font-variant-numeric: tabular-nums lining-nums;
+        }
+
+        .card span {
+            color: var(--color-text-muted);
+            font-size: var(--text-sm);
+        }
+
+        .legend {
+            display: grid;
+            gap: var(--space-3);
+            margin-top: var(--space-4);
+        }
+
+        .legend-item {
+            display: flex;
+            gap: var(--space-3);
+            align-items: center;
+            color: var(--color-text-muted);
+            font-size: var(--text-sm);
+        }
+
+        .swatch {
+            width: 16px;
+            height: 16px;
+            border-radius: 999px;
+        }
+
+        .info-note {
+            padding: var(--space-4);
+            background: color-mix(in oklab, var(--color-primary) 8%, var(--color-surface));
+            border: 1px solid color-mix(in oklab, var(--color-primary) 18%, transparent);
+            border-radius: var(--radius-lg);
+            color: var(--color-text-muted);
+            font-size: var(--text-sm);
+        }
+
+        .steps {
+            margin-top: 0;
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-2);
+            flex: 1;
+            overflow-y: auto;
+            padding-right: var(--space-2);
+        }
+
+        .step {
+            font-size: var(--text-sm);
+            color: var(--color-text-muted);
+            padding: 0.7rem 0.85rem;
+            border-radius: var(--radius-md);
+            background: var(--color-surface-2);
+            border: 1px solid color-mix(in oklab, var(--color-text) 8%, transparent);
+        }
+
+        .step strong {
+            color: var(--color-text);
+        }
+
+        /* TABLA DE ELEMENTOS ESTILOS */
+        .table-panel h2 {
+            font-size: var(--text-lg);
+            margin: 0 0 var(--space-3) 0;
+            flex-shrink: 0;
+        }
+        .table-container {
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--color-border);
+            background: var(--color-surface-2);
+            overflow: visible;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: var(--text-sm);
+        }
+        th, td {
+            padding: 0.75rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--color-border);
+        }
+        th {
+            background: var(--color-surface-offset);
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        tr:last-child td {
+            border-bottom: none;
+        }
+        
+        tr { transition: background-color var(--transition); }
+        tr.active td { background: color-mix(in oklab, var(--color-primary) 15%, transparent); }
+        tr.compare td { background: color-mix(in oklab, var(--color-warning) 15%, transparent); }
+        tr.swap td { background: color-mix(in oklab, var(--color-error) 15%, transparent); }
+        tr.sorted td { background: color-mix(in oklab, var(--color-success) 12%, transparent); }
+
+        @media (max-width: 1100px) {
+            .layout,
+            .meta-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .panel {
+                position: static;
+            }
+        }
+
+        @media (max-width: 700px) {
+            .app {
+                padding: var(--space-4);
+            }
+
+            .actions,
+            .algos,
+            .quick-stats,
+            .stats-cards {
+                grid-template-columns: 1fr;
+            }
+
+            .array-wrapper {
+                min-height: 300px;
+                --bar-min: 18px;
+            }
+
+            .bar span {
+                opacity: 0;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <main class="app">
+
+
+        <section class="top-controls">
+            <!-- Criterio -->
+            <div class="control-group">
+                <label>Criterio de Ordenación
+                    <select id="criteriaSelect" style="padding: 0.6rem 1rem;">
+                        <option value="deliveryTime">Tiempo de entrega (h)</option>
+                        <option value="priority">Prioridad (1-10)</option>
+                        <option value="productionTime">Tiempo de Prod. (h)</option>
+                    </select>
+                </label>
+            </div>
+            
+            <!-- Tipo -->
+            <div class="control-group">
+                <label>Tipo de orden
+                    <select id="orderSelect" style="padding: 0.6rem 1rem;">
+                        <option value="asc">Ascendente (Menor a Mayor)</option>
+                        <option value="desc">Descendente (Mayor a Menor)</option>
+                    </select>
+                </label>
+            </div>
+
+            <!-- Elementos / Volumen -->
+            <div class="control-group">
+                <label>Lote de pedidos
+                    <input id="sizeRange" type="range" min="6" max="20" value="12" style="width: 140px;" />
+                </label>
+                <div class="inline-info" style="font-size: 0.75rem; color: var(--color-text-muted); margin-top: -3px;"><span id="sizeLabel">12 elementos</span><span id="sortedState" style="display:none;"></span></div>
+            </div>
+
+            <!-- Velocidad -->
+            <div class="control-group">
+                <label>Velocidad
+                    <input id="speedRange" type="range" min="1" max="100" value="50" style="width: 140px;" />
+                </label>
+                <div class="inline-info" style="font-size: 0.75rem; color: var(--color-text-muted); margin-top: -3px;"><span id="speedLabel">650 ms</span></div>
+            </div>
+
+            <!-- Algoritmos -->
+            <div class="control-group">
+                <div style="font-size: 0.8rem; color: var(--color-text-muted); margin-bottom: 4px;">Algoritmo</div>
+                <div class="algos" style="display: flex; gap: var(--space-2);">
+                    <button class="algo-btn active" data-algo="bubble" style="padding: 0.5rem 1rem;">Bubble</button>
+                    <button class="algo-btn" data-algo="selection" style="padding: 0.5rem 1rem;">Selection</button>
+                    <button class="algo-btn" data-algo="insertion" style="padding: 0.5rem 1rem;">Insertion</button>
+                    <button class="algo-btn" data-algo="shell" style="padding: 0.5rem 1rem;">Shell</button>
+                </div>
+            </div>
+
+            <!-- Acciones -->
+            <div class="control-group">
+                <div style="font-size: 0.8rem; color: var(--color-text-muted); margin-bottom: 4px;">Controles</div>
+                <div class="actions" style="display: flex; gap: var(--space-2);">
+                    <button class="action-btn primary" id="runBtn" style="padding: 0.5rem 1rem;">▶ Ejecutar</button>
+                    <button class="action-btn" id="pauseBtn" style="padding: 0.5rem 1rem;">⏸ Pausar</button>
+                    <button class="action-btn" id="sortBtn" style="padding: 0.5rem 1rem;"> Ordenar</button>
+                    <button class="action-btn warn" id="shuffleBtn" style="padding: 0.5rem 1rem;"> Desordenar</button>
+                    <button class="action-btn" id="regenBtn" style="padding: 0.5rem 1rem;">⟳ Nuevo</button>
+                    <button class="action-btn" id="stepBtn" style="padding: 0.5rem 1rem;">⏭ Paso</button>
+                </div>
+            </div>
+
+            <button class="theme-btn" id="themeToggle" aria-label="Cambiar tema" style="padding: 0.5rem 0.8rem; font-size: 0.85rem; height: fit-content; margin-bottom: 4px;">☀ Tema</button>
+        </section>
+
+        <!-- 2x2 MAIN GRID -->
+        <section class="main-grid">
+
+            <!-- Fila 1 - Columna 1: TABLA -->
+            <div class="panel table-panel">
+                <h2 style="font-size: var(--text-lg); margin: 0 0 var(--space-3) 0;">Registro Tabular en Tiempo Real</h2>
+                <div class="table-container">
+                    <table id="dataTable">
+                        <thead>
+                            <tr>
+                                <th>Posición</th>
+                                <th>ID Pedido</th>
+                                <th>Prioridad (1-10)</th>
+                                <th>T. Entrega (h)</th>
+                                <th>T. Producción (h)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Auto populated -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Fila 1 - Columna 2: GRÁFICO -->
+            <div class="panel canvas-panel">
+                <div class="canvas-header">
+                    <div>
+                        <h2 id="currentAlgoTitle" style="font-size: var(--text-lg); margin: 0;">Bubble Sort</h2>
+                        <p id="currentAlgoDesc" style="margin:0;color:var(--color-text-muted)">Compara elementos adyacentes e intercambia de posición aquellos que están desordenados.</p>
+                    </div>
+                    <div class="status-pill" id="statusPill">Listo para ejecutar</div>
+                </div>
+
+                <div class="legend" style="display: flex; gap: var(--space-3); margin-top: -8px; margin-bottom: var(--space-4); font-size: 0.85rem; flex-wrap: wrap; color: var(--color-text-muted);">
+                    <div class="legend-item" style="display: flex; align-items: center; gap: 6px;"><span class="swatch" style="background:var(--color-primary); width: 12px; height: 12px;"></span> Base u Origen</div>
+                    <div class="legend-item" style="display: flex; align-items: center; gap: 6px;"><span class="swatch" style="background:var(--color-warning); width: 12px; height: 12px;"></span> Evaluación/Comparación</div>
+                    <div class="legend-item" style="display: flex; align-items: center; gap: 6px;"><span class="swatch" style="background:var(--color-error); width: 12px; height: 12px;"></span> Swap</div>
+                    <div class="legend-item" style="display: flex; align-items: center; gap: 6px;"><span class="swatch" style="background:var(--color-success); width: 12px; height: 12px;"></span> Ordenado</div>
+                </div>
+
+                <div class="array-shell" style="margin-bottom: var(--space-4);">
+                    <div class="array-wrapper" id="arrayContainer" aria-live="polite"></div>
+                </div>
+
+                <div style="margin-top: auto;">
+                    <h3 style="font-size: var(--text-base); margin: 0 0 var(--space-3) 0; color: var(--color-text-muted);">Métricas de Procesamiento</h3>
+                    <div class="stats-cards" style="margin-top: 0;">
+                        <div class="card" style="padding: var(--space-3); text-align: center;"><span>Comparaciones</span><strong id="comparisonsValue" style="font-size: clamp(1.1rem, 1.4vw, 1.6rem); display: block; color: var(--color-text);">0</strong></div>
+                        <div class="card" style="padding: var(--space-3); text-align: center;"><span>Intercambios (Swaps)</span><strong id="swapsValue" style="font-size: clamp(1.1rem, 1.4vw, 1.6rem); display: block; color: var(--color-text);">0</strong></div>
+                        <div class="card" style="padding: var(--space-3);"><span>C. temporal</span><strong id="timeValue" style="font-size: clamp(0.9rem, 1vw, 1.1rem);">O(n²)</strong></div>
+                        <div class="card" style="padding: var(--space-3);"><span>C. espacial</span><strong id="spaceValue" style="font-size: clamp(0.9rem, 1vw, 1.1rem);">O(1)</strong></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Fila 2 - Columna Completa: REGISTRO/LOGS -->
+            <div class="panel logs-panel">
+                <h2 style="font-size: var(--text-lg); margin: 0 0 var(--space-3) 0;">Registro de Operaciones (Logs)</h2>
+                <div class="steps" id="stepsLog" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: var(--space-3); align-items: start;"></div>
+            </div>
+
+        </section>
+    </main>
+
+    <script>
+        // GLOBALES Y ESTADO (PEDIDOS)
+        const state = {
+            array: [], sorted: false, algorithm: 'bubble', size: 12, delay: 650,
+            criteria: 'deliveryTime',
+            sortOrder: 'asc',
+            comparisons: 0, swaps: 0,
+            running: false, paused: false, generator: null, highlights: {}
+        };
+
+        const els = {
+            arrayContainer: document.getElementById('arrayContainer'),
+            sizeRange: document.getElementById('sizeRange'), speedRange: document.getElementById('speedRange'),
+            criteriaSelect: document.getElementById('criteriaSelect'), orderSelect: document.getElementById('orderSelect'),
+            sizeLabel: document.getElementById('sizeLabel'), speedLabel: document.getElementById('speedLabel'),
+            sortedState: document.getElementById('sortedState'), statusPill: document.getElementById('statusPill'),
+            comparisonsValue: document.getElementById('comparisonsValue'), swapsValue: document.getElementById('swapsValue'),
+            timeValue: document.getElementById('timeValue'), spaceValue: document.getElementById('spaceValue'),
+            stepsLog: document.getElementById('stepsLog'),
+            currentAlgoTitle: document.getElementById('currentAlgoTitle'), currentAlgoDesc: document.getElementById('currentAlgoDesc'),
+            runBtn: document.getElementById('runBtn'), pauseBtn: document.getElementById('pauseBtn'), sortBtn: document.getElementById('sortBtn'),
+            shuffleBtn: document.getElementById('shuffleBtn'), regenBtn: document.getElementById('regenBtn'), stepBtn: document.getElementById('stepBtn'),
+            themeToggle: document.getElementById('themeToggle')
+        };
+
+        const algoMeta = {
+            bubble: { title: 'Bubble Sort', desc: 'Evalúa la colección paso a paso, "burbujeando" los pedidos que no cumplen la condición.', time: 'O(n²)', space: 'O(1)' },
+            selection: { title: 'Selection Sort', desc: 'Encuentra el pedido óptimo según el criterio y lo aísla en la sección ordenada repetidamente.', time: 'O(n²)', space: 'O(1)' },
+            insertion: { title: 'Insertion Sort', desc: 'Extrae un pedido y lo reinserta retrocediendo hasta encontrar su lugar adecuado logísticamente.', time: 'O(n²)', space: 'O(1)' },
+            shell: { title: 'Shell Sort', desc: 'Evalúa pedidos a grandes brechas de distancia para reubicarlos y disminuir el coste del ordenamiento.', time: 'O(n log n)', space: 'O(1)' }
+        };
+
+        const criteriaNames = {
+            deliveryTime: 'Tiempo de Entrega',
+            priority: 'Prioridad',
+            productionTime: 'Tiempo de Producción'
+        };
+
+        // GENERACIÓN DE DATOS - OBJETOS PEDIDO
+        function randomOrders(size) {
+            return Array.from({ length: size }, (_, i) => ({
+                id: `P-${String(i+1).padStart(3, '0')}`,
+                deliveryTime: Math.floor(Math.random() * 72) + 1, // 1 to 72 hrs
+                priority: Math.floor(Math.random() * 10) + 1,     // 1 to 10
+                productionTime: Math.floor(Math.random() * 48) + 1 // 1 to 48 hrs
+            }));
+        }
+
+        function shuffle(arr) {
+            const clone = [...arr];
+            for (let i = clone.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [clone[i], clone[j]] = [clone[j], clone[i]];
+            }
+            return clone;
+        }
+
+        // FUNCIONES CORE E UI
+        function setStatus(text) { els.statusPill.textContent = text; }
+        function clearLog() { els.stepsLog.innerHTML = ''; }
+
+        function logStep(text, strong = '') {
+            const div = document.createElement('div'); div.className = 'step';
+            div.innerHTML = strong ? `<strong>${strong}</strong> ${text}` : text;
+            els.stepsLog.prepend(div);
+            while (els.stepsLog.children.length > 25) els.stepsLog.removeChild(els.stepsLog.lastChild);
+        }
+
+        function resetMetrics() {
+            state.comparisons = 0; state.swaps = 0; state.highlights = {};
+            updateStats(); clearLog();
+        }
+
+        function updateStats() {
+            els.comparisonsValue.textContent = state.comparisons;
+            els.swapsValue.textContent = state.swaps;
+            els.timeValue.textContent = algoMeta[state.algorithm].time;
+            els.spaceValue.textContent = algoMeta[state.algorithm].space;
+            
+            els.sortedState.textContent = state.sorted ? 'Ordenado' : 'Desordenado';
+        }
+
+        function renderArray() {
+            els.arrayContainer.innerHTML = '';
+            
+            // Establecer el máximo valor basado en el criterio activo para escalar bien las barras.
+            const maxVals = { deliveryTime: 72, priority: 10, productionTime: 48 };
+            const max = maxVals[state.criteria] || 10;
+            
+            const total = state.array.length;
+            const minBar = total <= 20 ? 32 : total <= 35 ? 26 : total <= 50 ? 20 : total <= 70 ? 16 : 12;
+            const labelOpacity = total <= 30 ? 1 : total <= 42 ? 0.72 : total <= 56 ? 0.38 : 0;
+
+            els.arrayContainer.style.setProperty('--bar-min', `${minBar}px`);
+            els.arrayContainer.style.setProperty('--label-opacity', `${labelOpacity}`);
+
+            const dtBody = document.querySelector('#dataTable tbody');
+            if (dtBody) dtBody.innerHTML = '';
+
+            state.array.forEach((orderInfo, index) => {
+                const val = orderInfo[state.criteria];
+                
+                // --- RENDERIZAR BARRA ---
+                const bar = document.createElement('div'); bar.className = 'bar';
+                // Altura mínima 10%
+                bar.style.height = `${Math.max((val / max) * 100, 10)}%`;
+
+                if ((state.highlights.active || []).includes(index)) bar.classList.add('active');
+                if ((state.highlights.compare || []).includes(index)) bar.classList.add('compare');
+                if ((state.highlights.swap || []).includes(index)) bar.classList.add('swap');
+                if ((state.highlights.sorted || []).includes(index)) bar.classList.add('sorted');
+
+                // Mostrar el valor en grande y el ID pequeño si hay espacio
+                const label = document.createElement('span'); 
+                label.innerHTML = `
+                    <div class="id" style="${total > 26 ? 'display:none' : ''}">${orderInfo.id}</div>
+                    <span>${val}${state.criteria === 'priority' ? '' : 'h'}</span>
+                `;
+                
+                bar.appendChild(label); 
+                bar.title = `Index: ${index} | Pedido: ${orderInfo.id}\nEntrega: ${orderInfo.deliveryTime}h\nPrioridad: ${orderInfo.priority}\nProducción: ${orderInfo.productionTime}h`;
+                
+                els.arrayContainer.appendChild(bar);
+                
+                // --- RENDERIZAR TABLA ---
+                if(dtBody) {
+                    const tr = document.createElement('tr');
+                    
+                    if ((state.highlights.active || []).includes(index)) tr.classList.add('active');
+                    if ((state.highlights.compare || []).includes(index)) tr.classList.add('compare');
+                    if ((state.highlights.swap || []).includes(index)) tr.classList.add('swap');
+                    if ((state.highlights.sorted || []).includes(index)) tr.classList.add('sorted');
+
+                    tr.innerHTML = `
+                        <td>${index}</td>
+                        <td><strong>${orderInfo.id}</strong></td>
+                        <td>${orderInfo.priority}</td>
+                        <td>${orderInfo.deliveryTime}h</td>
+                        <td>${orderInfo.productionTime}h</td>
+                    `;
+                    dtBody.appendChild(tr);
+                }
+            });
+        }
+
+        function sleep(ms) { return new Promise(resolve => setTimeout(resolve, ms)); }
+        function currentDelay() { return 1200 - Number(els.speedRange.value) * 11; }
+        async function waitTurn() { while (state.paused) await sleep(80); await sleep(state.delay); }
+
+        function prepareToRun() {
+            resetMetrics();
+            if (state.sorted) {
+                state.array = shuffle(state.array);
+                state.sorted = false;
+                logStep("El conjunto logístico estaba procesado, se ha mezclado nuevamente.", "Auto-Shuffle:");
+            }
+            updateStats(); renderArray();
+        }
+
+        // --- SISTEMA DE COMPARACIÓN DINÁMICO ---
+        // Devuelve > 0 si 'a' debe ir DESPUÉS de 'b'
+        // Devuelve < 0 si 'a' debe ir ANTES que 'b'
+        function compareOrders(a, b) {
+            const valA = a[state.criteria];
+            const valB = b[state.criteria];
+            let diff = valA - valB;
+            
+            // Logica del tipo de orden. Ascendente respeta la direción natural.
+            return state.sortOrder === 'asc' ? diff : -diff;
+        }
+
+        // --- MANEJADOR DE ALGORITMOS (COROUTINAS) ---
+        async function runGenerator(stepByStep = false) {
+            if (!state.generator) return;
+            state.running = true; state.paused = false;
+            setStatus(stepByStep ? 'Paso ejecutado' : 'Ordenando pedidos...');
+
+            while (state.running) {
+                const { value, done } = state.generator.next();
+
+                if (done) {
+                    state.running = false; state.generator = null; state.sorted = true;
+                    state.highlights = { sorted: Array.from({ length: state.array.length }, (_, i) => i) };
+                    setStatus('Simulación completada');
+                    logStep(`El catálogo de pedidos ha finalizado y se encuentra organizado satisfactoriamente.`, '¡Logística Terminada!:');
+                    renderArray(); updateStats(); return;
+                }
+
+                if (value) {
+                    if (typeof value.comparisons === 'number') state.comparisons = value.comparisons;
+                    if (typeof value.swaps === 'number') state.swaps = value.swaps;
+                    state.highlights = value.highlights || {};
+
+                    if (value.message) logStep(value.message, value.label || 'Eval.:');
+                    renderArray(); updateStats();
+                }
+
+                if (stepByStep) { state.running = false; setStatus('Pausado en paso manual'); return; }
+                await waitTurn();
+            }
+        }
+
+        // ==========================================
+        // ALGORITMOS LOGÍSTICOS
+        // ==========================================
+
+        function* bubbleSort(arrOri) {
+            let arr = [...arrOri]; 
+            let comparisons = 0, swaps = 0;
+            let n = arr.length;
+            let sortedSet = new Set();
+            
+            for (let i = 0; i < n - 1; i++) {
+                for (let j = 0; j < n - i - 1; j++) {
+                    comparisons++;
+                    
+                    yield { comparisons, swaps, highlights: { compare: [j, j + 1], sorted: Array.from(sortedSet) }, label: 'Comparar:', message: `Evaluando si el elemento en índice [${j}] es mayor al índice [${j+1}].` };
+
+                    if (compareOrders(arr[j], arr[j + 1]) > 0) {
+                        swaps++;
+                        [arr[j], arr[j + 1]] = [arr[j + 1], arr[j]];
+                        state.array = [...arr]; 
+                        yield { comparisons, swaps, highlights: { swap: [j, j + 1], sorted: Array.from(sortedSet) }, label: 'Intercambio:', message: `Condición cumplida, intercambiamos valores en índices [${j}] y [${j+1}].` };
+                    }
+                }
+                sortedSet.add(n - i - 1); 
+                yield { comparisons, swaps, highlights: { sorted: Array.from(sortedSet) }, label: 'Bloqueado:', message: `El elemento en el índice [${n - i - 1}] alcanzó su posición ordenada final.` };
+            }
+            sortedSet.add(0);
+            yield { comparisons, swaps, highlights: { sorted: Array.from(sortedSet) }, label: 'Fin:', message: `Arreglo completamente ordenado.` };
+        }
+
+        function* selectionSort(arrOri) {
+            let arr = [...arrOri];
+            let comparisons = 0, swaps = 0;
+            let n = arr.length;
+            let sortedSet = new Set();
+
+            for (let i = 0; i < n; i++) {
+                let optimal_idx = i;
+                yield { comparisons, swaps, highlights: { active: [optimal_idx], sorted: Array.from(sortedSet) }, label: 'Selección:', message: `Asignamos temporalmente el índice [${i}] como el valor óptimo actual.` };
+
+                for (let j = i + 1; j < n; j++) {
+                    comparisons++;
+                    yield { comparisons, swaps, highlights: { compare: [j, optimal_idx], active: [i], sorted: Array.from(sortedSet) }, label: 'Inspeccionar:', message: `Comparamos el índice [${j}] con el óptimo actual en [${optimal_idx}].` };
+
+                    if (compareOrders(arr[j], arr[optimal_idx]) < 0) {
+                        optimal_idx = j;
+                        yield { comparisons, swaps, highlights: { compare: [optimal_idx], active: [i], sorted: Array.from(sortedSet) }, label: 'Actualizar:', message: `Nuevo índice óptimo encontrado en [${optimal_idx}].` };
+                    }
+                }
+
+                if (optimal_idx !== i) {
+                    swaps++;
+                    [arr[i], arr[optimal_idx]] = [arr[optimal_idx], arr[i]];
+                    state.array = [...arr];
+                    yield { comparisons, swaps, highlights: { swap: [i, optimal_idx], sorted: Array.from(sortedSet) }, label: 'Intercambio:', message: `Movemos el valor óptimo hacia adelante, cambiando [${i}] por [${optimal_idx}].` };
+                }
+
+                sortedSet.add(i);
+                yield { comparisons, swaps, highlights: { sorted: Array.from(sortedSet) }, label: 'Bloqueado:', message: `Índice [${i}] fijado en el array ordenado.` };
+            }
+        }
+
+        function* insertionSort(arrOri) {
+            let arr = [...arrOri];
+            let comparisons = 0, swaps = 0;
+            let n = arr.length;
+            let sortedSet = new Set([0]);
+
+            for (let i = 1; i < n; i++) {
+                let keyItem = arr[i];
+                let j = i - 1;
+
+                yield { comparisons, swaps, highlights: { active: [i], sorted: Array.from(sortedSet) }, label: 'Extraer:', message: `Guardamos el valor del índice [${i}] en la variable clave para comparar con predecesores.` };
+
+                while (j >= 0) {
+                    comparisons++;
+                    if (compareOrders(arr[j], keyItem) > 0) {
+                        swaps++;
+                        arr[j + 1] = arr[j];
+                        state.array = [...arr];
+                        yield { comparisons, swaps, highlights: { swap: [j, j + 1], compare: [j], sorted: Array.from(sortedSet) }, label: 'Desplazar:', message: `El índice [${j}] se desplaza hacia la derecha a la posición [${j+1}].` };
+                        j = j - 1;
+                    } else {
+                        break; 
+                    }
+                }
+
+                arr[j + 1] = keyItem;
+                state.array = [...arr];
+                sortedSet.add(i);
+                yield { comparisons, swaps, highlights: { sorted: Array.from(sortedSet) }, label: 'Insertar:', message: `Ubicamos el valor clave extraído en su lugar correspondiente [${j + 1}].` };
+            }
+        }
+
+        function* shellSort(arrOri) {
+            let arr = [...arrOri];
+            let comparisons = 0, swaps = 0;
+            let n = arr.length;
+
+            for (let gap = Math.floor(n / 2); gap > 0; gap = Math.floor(gap / 2)) {
+                yield { comparisons, swaps, highlights: { active: [] }, label: 'Saltos (Gap):', message: `Iniciamos pasadas basándonos en un salto (gap) de ${gap} posiciones.` };
+
+                for (let i = gap; i < n; i++) {
+                    let tempItem = arr[i];
+                    let j;
+                    yield { comparisons, swaps, highlights: { compare: [i] }, label: 'Pivote:', message: `Elemento temporal en índice [${i}]. Evaluando distancias relativas.` };
+
+                    for (j = i; j >= gap; j -= gap) {
+                        comparisons++;
+                        if (compareOrders(arr[j - gap], tempItem) > 0) {
+                            swaps++;
+                            arr[j] = arr[j - gap];
+                            state.array = [...arr];
+                            yield { comparisons, swaps, highlights: { swap: [j, j - gap], active: [i] }, label: 'Desplazar:', message: `El valor previo a brecha ([${j - gap}]) es movido hacia adelante a [${j}].` };
+                        } else {
+                            yield { comparisons, swaps, highlights: { active: [j - gap], compare: [i] }, label: 'Sin cambio:', message: `Evaluación distante correcta para esta porción orientada.` };
+                            break;
+                        }
+                    }
+
+                    if (j !== i) {
+                        arr[j] = tempItem;
+                        state.array = [...arr];
+                        yield { comparisons, swaps, highlights: { swap: [j], compare: [i] }, label: 'Inserción:', message: `Insertando el elemento pivote temporal en la posición calculada [${j}].` };
+                    }
+                }
+            }
+            yield { comparisons, swaps, highlights: {}, label: 'Fin:', message: `Ordenamiento estructural finalizado con éxito.` };
+        }
+
+        function buildGenerator() {
+            if (state.algorithm === 'bubble') return bubbleSort(state.array);
+            if (state.algorithm === 'selection') return selectionSort(state.array);
+            if (state.algorithm === 'insertion') return insertionSort(state.array);
+            return shellSort(state.array);
+        }
+
+        // ==========================================
+        // LISTENERS Y EVENTOS UI DE FLUJO
+        // ==========================================
+
+        function rebuildArray(forceShuffle = false) {
+            state.array = randomOrders(state.size);
+            state.sorted = false;
+            if (forceShuffle) state.array = shuffle(state.array);
+            resetMetrics(); updateStats(); renderArray(); setStatus('Catálogo generado');
+        }
+
+        function stopRun() { state.running = false; state.generator = null; }
+
+        document.querySelectorAll('[data-algo]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('[data-algo]').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                state.algorithm = btn.dataset.algo;
+                els.currentAlgoTitle.textContent = algoMeta[state.algorithm].title;
+                els.currentAlgoDesc.textContent = algoMeta[state.algorithm].desc;
+                stopRun(); resetMetrics(); updateStats(); renderArray(); setStatus('Método seleccionado');
+            });
+        });
+
+        els.sizeRange.addEventListener('input', () => {
+            state.size = Number(els.sizeRange.value);
+            els.sizeLabel.textContent = `${state.size} pedidos`;
+            rebuildArray(true);
+        });
+
+        els.speedRange.addEventListener('input', () => {
+            state.delay = currentDelay();
+            els.speedLabel.textContent = `${state.delay} ms`;
+        });
+        
+        els.criteriaSelect.addEventListener('change', () => {
+            state.criteria = els.criteriaSelect.value;
+            state.sorted = false;
+            stopRun(); resetMetrics(); updateStats(); renderArray(); 
+            setStatus('Criterio Logístico Cambiado');
+            logStep(`Se cambió el modo de evaluación a: ${criteriaNames[state.criteria]}. Gráfico recalibrado.`, 'Info:');
+        });
+
+        els.orderSelect.addEventListener('change', () => {
+            state.sortOrder = els.orderSelect.value;
+            state.sorted = false;
+            stopRun(); resetMetrics(); updateStats(); renderArray(); 
+            setStatus('Modo de organización cambiado.');
+            logStep(`Dirección cambiada a: ${state.sortOrder === 'asc' ? 'Ascendente' : 'Descendente'}.`, 'Info:');
+        });
+
+        // Este nativo es para verificar que JS puro lo hace instantáneamente. Usa el comparador.
+        els.sortBtn.addEventListener('click', () => {
+            stopRun();
+            state.array.sort(compareOrders);
+            state.sorted = true;
+            state.highlights = { sorted: Array.from({ length: state.array.length }, (_, i) => i) };
+            renderArray(); updateStats(); setStatus('Pedidos procesados vía nativa');
+            logStep(`La distribución se organizó de golpe mediante la api nativa. Criterio: ${criteriaNames[state.criteria]}`, 'Ordenar Sistema:');
+        });
+
+        els.shuffleBtn.addEventListener('click', () => {
+            stopRun(); state.array = shuffle(state.array); state.sorted = false; state.highlights = {};
+            renderArray(); updateStats(); setStatus('Catálogo disuelto');
+            logStep('El registro de pedidos se ha revuelto completamente.', 'Desordenar:');
+        });
+
+        els.regenBtn.addEventListener('click', () => rebuildArray(true));
+
+        els.pauseBtn.addEventListener('click', () => {
+            if (!state.generator && !state.running) return;
+            state.paused = !state.paused;
+            setStatus(state.paused ? 'Operación pausada' : 'Reanudando...');
+            els.pauseBtn.textContent = state.paused ? '▶ Reanudar' : '⏸ Pausar';
+        });
+
+        els.runBtn.addEventListener('click', async () => {
+            stopRun(); state.delay = currentDelay(); prepareToRun(); state.generator = buildGenerator();
+            els.pauseBtn.textContent = '⏸ Pausar'; await runGenerator(false);
+        });
+
+        els.stepBtn.addEventListener('click', async () => {
+            if (!state.generator) { stopRun(); prepareToRun(); state.generator = buildGenerator(); }
+            state.delay = 0; await runGenerator(true);
+        });
+
+        els.themeToggle.addEventListener('click', () => {
+            const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', next);
+            els.themeToggle.textContent = next === 'dark' ? '☀ Tema' : '🌙 Tema';
+        });
+
+        // INICIALIZADOR
+        (function initApp() {
+            document.documentElement.setAttribute('data-theme', 'dark');
+            els.themeToggle.textContent = '☀ Tema';
+
+            state.delay = currentDelay();
+            els.speedLabel.textContent = `${state.delay} ms`;
+            els.sizeLabel.textContent = `${state.size} pedidos`;
+
+            rebuildArray(true);
+        })();
+    </script>
+</body>
+
+</html>

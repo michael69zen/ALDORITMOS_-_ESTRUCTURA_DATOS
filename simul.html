@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulador de Estructuras de Datos</title>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --panel-bg: rgba(30, 41, 59, 0.7);
+            --primary: #8b5cf6;
+            --primary-hover: #7c3aed;
+            --danger: #ef4444;
+            --danger-hover: #dc2626;
+            --text-main: #f8fafc;
+            --text-muted: #cbd5e1;
+            --node-bg: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+            --node-border: rgba(255, 255, 255, 0.1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(59, 130, 246, 0.15) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(139, 92, 246, 0.15) 0px, transparent 50%);
+            background-attachment: fixed;
+        }
+
+        header {
+            text-align: center;
+            padding: 2rem;
+            border-bottom: 1px solid var(--panel-bg);
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(10px);
+            z-index: 10;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: -webkit-linear-gradient(45deg, #60a5fa, #c084fc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+        }
+
+        p.subtitle {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+        }
+
+        .container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .sidebar {
+            width: 320px;
+            background: var(--panel-bg);
+            backdrop-filter: blur(12px);
+            border-right: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            box-shadow: 4px 0 24px rgba(0, 0, 0, 0.2);
+            z-index: 5;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        label {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        select, input {
+            padding: 0.8rem 1rem;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(15, 23, 42, 0.6);
+            color: white;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            outline: none;
+        }
+
+        select:focus, input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.3);
+        }
+
+        button {
+            padding: 0.8rem 1.5rem;
+            border-radius: 8px;
+            border: none;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            color: white;
+        }
+
+        .btn-add {
+            background-color: var(--primary);
+            box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+        }
+
+        .btn-add:hover {
+            background-color: var(--primary-hover);
+            transform: translateY(-2px);
+        }
+
+        .btn-remove {
+            background-color: var(--danger);
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+        }
+
+        .btn-remove:hover {
+            background-color: var(--danger-hover);
+            transform: translateY(-2px);
+        }
+
+        .btn-clear {
+            background-color: transparent;
+            border: 1px solid var(--text-muted);
+            color: var(--text-muted);
+        }
+
+        .btn-clear:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+
+        .canvas {
+            flex: 1;
+            padding: 3rem;
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            overflow-x: auto;
+            position: relative;
+        }
+
+        /* Contenedor de los nodos */
+        #visualization {
+            display: flex;
+            align-items: center;
+            gap: 10px; /* Reducido para hacer espacio para flechas grandes */
+            padding: 2rem;
+            min-height: 200px;
+        }
+
+        /* Para la pila, los alineamos de abajo hacia arriba */
+        .layout-pila {
+            flex-direction: column-reverse;
+            align-items: center !important;
+            justify-content: flex-start !important;
+            margin: auto;
+        }
+
+        /* Nodos */
+        .node-wrapper {
+            display: flex;
+            align-items: center;
+            animation: fadeIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+            opacity: 0;
+            transform: scale(0.8);
+        }
+
+        .layout-pila .node-wrapper {
+            flex-direction: column-reverse;
+        }
+
+        @keyframes fadeIn {
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        @keyframes fadeOut {
+            to {
+                opacity: 0;
+                transform: scale(0.5);
+                margin: 0 -50px;
+            }
+        }
+
+        .node {
+            background: var(--node-bg);
+            border: 1px solid var(--node-border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            min-width: 180px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+            position: relative;
+            z-index: 2;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(5px);
+        }
+
+        .node:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.4), 0 0 15px rgba(139, 92, 246, 0.4);
+        }
+
+        .node-header {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: rgba(255, 255, 255, 0.7);
+            margin-bottom: 0.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            padding-bottom: 0.3rem;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .node-id {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: bold;
+            color: #60a5fa;
+        }
+
+        .node-body {
+            font-size: 1.2rem;
+            font-weight: 600;
+            word-break: break-word;
+        }
+
+        /* Flechas */
+        .arrow {
+            color: var(--text-muted);
+            font-size: 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 50px;
+            opacity: 0.7;
+            font-weight: bold;
+        }
+
+        .layout-pila .arrow {
+            width: auto;
+            height: 40px;
+            transform: rotate(-90deg);
+        }
+
+        .pointer-null {
+            color: rgba(255, 255, 255, 0.3);
+            font-style: italic;
+            font-size: 0.9rem;
+            padding: 0 10px;
+        }
+
+        /* Mensajes de estado */
+        .status-bar {
+            position: absolute;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(10px);
+            padding: 0.8rem 2rem;
+            border-radius: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            transition: all 0.3s;
+            opacity: 0;
+        }
+        
+        .status-bar.show {
+            opacity: 1;
+        }
+
+        /* Highlight classes para animaciones de inserción/eliminación */
+        .highlight-add {
+            box-shadow: 0 0 20px 5px rgba(59, 130, 246, 0.8);
+            border-color: #3b82f6;
+        }
+
+        .highlight-remove {
+            box-shadow: 0 0 20px 5px rgba(239, 68, 68, 0.8);
+            border-color: #ef4444;
+            background: linear-gradient(135deg, #ef4444 0%, #991b1b 100%);
+        }
+
+        /* Punteros CABEZA / COLA / TOPE */
+        .label-pointer {
+            position: absolute;
+            background: #2563eb;
+            color: white;
+            font-size: 0.7rem;
+            font-weight: bold;
+            padding: 2px 8px;
+            border-radius: 10px;
+            top: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            white-space: nowrap;
+        }
+
+        .label-tail {
+            background: #059669;
+            top: auto;
+            bottom: -12px;
+        }
+
+        /* Error Modal */
+        .error-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(5px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .error-modal-overlay.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .error-modal-content {
+            background: linear-gradient(135deg, #1e293b, #0f172a);
+            border: 1px solid var(--danger);
+            border-radius: 16px;
+            padding: 2.5rem;
+            max-width: 450px;
+            text-align: center;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), 0 0 20px rgba(239, 68, 68, 0.4);
+            transform: scale(0.8);
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .error-modal-overlay.show .error-modal-content {
+            transform: scale(1);
+        }
+
+        .error-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            animation: shake 0.5s ease-in-out;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            50% { transform: translateX(10px); }
+            75% { transform: translateX(-10px); }
+        }
+
+        .error-title {
+            color: var(--danger);
+            font-size: 1.6rem;
+            margin-bottom: 1rem;
+            font-weight: bold;
+        }
+
+        .error-message {
+            color: var(--text-main);
+            font-size: 1.15rem;
+            line-height: 1.5;
+            margin-bottom: 2rem;
+        }
+
+        .btn-error-close {
+            background-color: var(--danger);
+            color: white;
+            border: none;
+            padding: 0.8rem 2rem;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            width: 100%;
+            font-size: 1.1rem;
+        }
+
+        .btn-error-close:hover {
+            background-color: var(--danger-hover);
+        }
+
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Simulador de Registros</h1>
+        <p class="subtitle">Visualizador interactivo de Pila, Cola, Lista Simple y Lista Doblemente Enlazada</p>
+    </header>
+
+    <div class="container">
+        <!-- Sidebar Controls -->
+        <aside class="sidebar">
+            <div class="control-group">
+                <label for="struct-type">Estructura de Datos</label>
+                <select id="struct-type">
+                    <option value="lista-simple">Lista Enlazada Simple</option>
+                    <option value="lista-doble">Lista Doblemente Enlazada</option>
+                    <option value="pila">Pila (Stack - LIFO)</option>
+                    <option value="cola">Cola (Queue - FIFO)</option>
+                </select>
+            </div>
+
+            <hr style="border:0; border-top: 1px solid rgba(255,255,255,0.1); margin: 0.5rem 0;">
+
+            <div class="control-group">
+                <label for="student-name">Nombre del Estudiante</label>
+                <input type="text" id="student-name" placeholder="Ej: Juan Pérez" autocomplete="off">
+            </div>
+
+            <button class="btn-add" id="btn-add">
+                <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+                Agregar Estudiante
+            </button>
+
+            <button class="btn-remove" id="btn-remove">
+                <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                <span id="remove-text">Eliminar Estudiante</span>
+            </button>
+
+            <hr style="border:0; border-top: 1px solid rgba(255,255,255,0.1); margin: 0.5rem 0;">
+
+            <div class="control-group">
+                <label for="delete-id">Eliminar por ID</label>
+                <div style="display: flex; gap: 0.5rem;">
+                    <input type="number" id="delete-id" placeholder="Ej: 2" min="1" style="flex: 1;">
+                    <button class="btn-remove" id="btn-remove-id" style="flex: 1;">
+                        Eliminar ID
+                    </button>
+                </div>
+            </div>
+
+            <button class="btn-clear" id="btn-clear">
+                Vaciar Estructura
+            </button>
+            
+            <div style="margin-top: auto; font-size: 0.85rem; color: var(--text-muted); line-height: 1.5;">
+                <strong>Reglas de la estructura actual:</strong>
+                <p id="struct-rules">Las listas insertan al final. Puedes eliminar del inicio.</p>
+            </div>
+        </aside>
+
+        <!-- Main Canvas -->
+        <main class="canvas" id="canvas">
+            <div id="visualization" class="layout-lista-simple">
+                <!-- Nodes will be injected here -->
+            </div>
+            <div class="status-bar" id="status-bar">Estructura inicializada</div>
+        </main>
+    </div>
+
+    <!-- Error Modal -->
+    <div class="error-modal-overlay" id="error-modal">
+        <div class="error-modal-content">
+            <div class="error-icon">⚠️</div>
+            <h2 class="error-title">Acción no permitida</h2>
+            <p class="error-message" id="error-message-text">Mensaje de error aquí.</p>
+            <button class="btn-error-close" id="btn-error-close">Entendido</button>
+        </div>
+    </div>
+
+    <script>
+        // State
+        let nodes = [];
+        let globalId = 1;
+
+        // Elements
+        const structSelect = document.getElementById('struct-type');
+        const nameInput = document.getElementById('student-name');
+        const btnAdd = document.getElementById('btn-add');
+        const btnRemove = document.getElementById('btn-remove');
+        const btnClear = document.getElementById('btn-clear');
+        const deleteIdInput = document.getElementById('delete-id');
+        const btnRemoveId = document.getElementById('btn-remove-id');
+        const visualization = document.getElementById('visualization');
+        const removeText = document.getElementById('remove-text');
+        const structRules = document.getElementById('struct-rules');
+        const statusBar = document.getElementById('status-bar');
+
+        // Modal Elements
+        const errorModal = document.getElementById('error-modal');
+        const errorMessageText = document.getElementById('error-message-text');
+        const btnErrorClose = document.getElementById('btn-error-close');
+
+        // Close Modal
+        btnErrorClose.addEventListener('click', () => {
+            errorModal.classList.remove('show');
+        });
+
+        function showError(msg) {
+            errorMessageText.textContent = msg;
+            errorModal.classList.add('show');
+        }
+
+        // Names generator if input is empty
+        const defaultNames = ["Ana", "Carlos", "Elena", "David", "Sofia", "Miguel", "Lucia", "Jorge"];
+
+        // Update UI based on struct
+        function updateUI() {
+            const type = structSelect.value;
+            
+            // Update Canvas Layout class
+            visualization.className = '';
+            if(type === 'pila') {
+                visualization.classList.add('layout-pila');
+            } else {
+                visualization.classList.add(`layout-${type}`);
+            }
+
+            // Update Rules and Button Texts
+            switch(type) {
+                case 'pila':
+                    removeText.innerText = "Pop (Eliminar Tope)";
+                    structRules.innerHTML = "<strong>Pila (LIFO):</strong><br>El último elemento en entrar es el primero en salir (Pop). Se inserta en el tope.";
+                    break;
+                case 'cola':
+                    removeText.innerText = "Dequeue (Eliminar Frente)";
+                    structRules.innerHTML = "<strong>Cola (FIFO):</strong><br>El primer elemento en entrar es el primero en salir (Dequeue). Se inserta al final.";
+                    break;
+                case 'lista-simple':
+                    removeText.innerText = "Eliminar (Cabeza)";
+                    structRules.innerHTML = "<strong>Lista Simple:</strong><br>Nodos conectados en una sola dirección. Se inserta al final, se elimina por la cabeza para este demo.";
+                    break;
+                case 'lista-doble':
+                    removeText.innerText = "Eliminar (Cabeza)";
+                    structRules.innerHTML = "<strong>Lista Doble:</strong><br>Nodos conectados en ambas direcciones (Siguiente y Anterior).";
+                    break;
+            }
+
+            renderNodes();
+        }
+
+        structSelect.addEventListener('change', () => {
+            // When changing structure, clear data to avoid visual logic mismatch
+            nodes = [];
+            globalId = 1;
+            updateUI();
+            showStatus(`Cambio a ${structSelect.options[structSelect.selectedIndex].text}. Estructura vaciada.`);
+        });
+
+        // Add Node
+        btnAdd.addEventListener('click', () => {
+            const name = nameInput.value.trim() || defaultNames[Math.floor(Math.random() * defaultNames.length)];
+            const newNode = {
+                id: globalId++,
+                name: name
+            };
+
+            const type = structSelect.value;
+
+            // En Pila, se inserta al "tope". Visualmente en nuestro layout-pila, el array end es el tope.
+            // En Cola y Listas, se inserta al "final".
+            nodes.push(newNode);
+
+            nameInput.value = '';
+            renderNodes();
+            
+            // Highlight newest node
+            setTimeout(() => {
+                const nodeEls = document.querySelectorAll('.node');
+                if(nodeEls.length > 0) {
+                    const lastEl = type === 'pila' ? nodeEls[nodeEls.length-1] : nodeEls[nodeEls.length-1];
+                    // wait actually renderNodes recreates all. The last added in array is nodes[nodes.length-1].
+                    // Since it's recreated, let's just highlight the DOM element.
+                    // For Pila (flex column-reverse), the last DOM element is at the top.
+                    lastEl.classList.add('highlight-add');
+                    setTimeout(() => lastEl.classList.remove('highlight-add'), 1000);
+                }
+            }, 50);
+
+            showStatus(`Estudiante ${name} (ID: ${newNode.id}) agregado.`);
+        });
+
+        // Remove Node
+        btnRemove.addEventListener('click', () => {
+            if (nodes.length === 0) {
+                showError("La estructura está vacía. No hay elementos para eliminar.");
+                return;
+            }
+
+            const type = structSelect.value;
+            let removedNode = null;
+            let targetIndex = -1;
+
+            if (type === 'pila') {
+                // LIFO - Remove last
+                targetIndex = nodes.length - 1;
+            } else {
+                // Cola (FIFO) o Listas (remove from head)
+                targetIndex = 0;
+            }
+
+            // Animate removal
+            const nodeWrappers = document.querySelectorAll('.node-wrapper');
+            const targetWrapper = nodeWrappers[targetIndex];
+            
+            if(targetWrapper) {
+                const nodeInner = targetWrapper.querySelector('.node');
+                nodeInner.classList.add('highlight-remove');
+                
+                setTimeout(() => {
+                    targetWrapper.style.animation = 'fadeOut 0.4s forwards';
+                    setTimeout(() => {
+                        removedNode = type === 'pila' ? nodes.pop() : nodes.shift();
+                        renderNodes();
+                        showStatus(`Estudiante ${removedNode.name} (ID: ${removedNode.id}) eliminado.`);
+                    }, 400);
+                }, 300);
+            }
+        });
+
+        btnClear.addEventListener('click', () => {
+            nodes = [];
+            globalId = 1;
+            renderNodes();
+            showStatus("Estructura vaciada.");
+        });
+
+        // Remove by ID
+        btnRemoveId.addEventListener('click', () => {
+            if (nodes.length === 0) {
+                showError("La estructura está vacía. No hay elementos para eliminar.");
+                return;
+            }
+
+            const idToRemove = parseInt(deleteIdInput.value);
+            if (isNaN(idToRemove)) {
+                showError("Por favor, ingresa un número de ID válido.");
+                return;
+            }
+
+            const type = structSelect.value;
+            
+            // Verificación de reglas de la estructura
+            if (type === 'pila') {
+                showError("No se puede eliminar por ID en una Pila (LIFO). Por definición, en una Pila solo se puede extraer el elemento que se encuentra en el TOPE.");
+                return;
+            }
+            if (type === 'cola') {
+                showError("No se puede eliminar por ID en una Cola (FIFO). Por definición, en una Cola solo se puede extraer el elemento que se encuentra en el FRENTE.");
+                return;
+            }
+
+            // Para Lista Simple y Doble, buscamos el ID
+            const targetIndex = nodes.findIndex(node => node.id === idToRemove);
+
+            if (targetIndex === -1) {
+                showError(`No se encontró ningún estudiante con el ID #${idToRemove} en la estructura.`);
+                return;
+            }
+
+            // Animate removal
+            const nodeWrappers = document.querySelectorAll('.node-wrapper');
+            const targetWrapper = nodeWrappers[targetIndex];
+            
+            if(targetWrapper) {
+                const nodeInner = targetWrapper.querySelector('.node');
+                nodeInner.classList.add('highlight-remove');
+                
+                setTimeout(() => {
+                    targetWrapper.style.animation = 'fadeOut 0.4s forwards';
+                    setTimeout(() => {
+                        const removedNode = nodes.splice(targetIndex, 1)[0];
+                        deleteIdInput.value = '';
+                        renderNodes();
+                        showStatus(`Estudiante ${removedNode.name} (ID: ${removedNode.id}) eliminado por ID.`);
+                    }, 400);
+                }, 300);
+            }
+        });
+
+        // Render nodes based on struct type
+        function renderNodes() {
+            visualization.innerHTML = '';
+            const type = structSelect.value;
+
+            if (nodes.length === 0) {
+                visualization.innerHTML = '<div class="pointer-null">La estructura está vacía (NULL)</div>';
+                return;
+            }
+
+            nodes.forEach((node, index) => {
+                const wrapper = document.createElement('div');
+                wrapper.className = 'node-wrapper';
+
+                // Node content
+                const nodeEl = document.createElement('div');
+                nodeEl.className = 'node';
+                
+                let labelsHtml = '';
+                // Add Head/Tail / Top labels
+                if (type === 'pila') {
+                    if (index === nodes.length - 1) labelsHtml += '<div class="label-pointer">TOPE (TOP)</div>';
+                } else {
+                    if (index === 0) labelsHtml += '<div class="label-pointer">CABEZA (FRENTE)</div>';
+                    if (index === nodes.length - 1 && nodes.length > 1) labelsHtml += '<div class="label-pointer label-tail">COLA (FINAL)</div>';
+                }
+
+                nodeEl.innerHTML = `
+                    ${labelsHtml}
+                    <div class="node-header">
+                        <span>Estudiante</span>
+                        <span class="node-id">#${node.id}</span>
+                    </div>
+                    <div class="node-body">
+                        ${node.name}
+                    </div>
+                `;
+
+                wrapper.appendChild(nodeEl);
+
+                // Arrows
+                if (index < nodes.length - 1) {
+                    const arrow = document.createElement('div');
+                    arrow.className = 'arrow';
+                    
+                    if (type === 'lista-doble') {
+                        arrow.innerHTML = '⇄';
+                    } else if (type === 'pila') {
+                        // Pila apunta hacia abajo en el dibujo (del tope al anterior)
+                        arrow.innerHTML = '↓';
+                    } else {
+                        arrow.innerHTML = '→';
+                    }
+                    wrapper.appendChild(arrow);
+                } else {
+                    // Last node points to NULL (except in some circular, but here normal)
+                    const nullPointer = document.createElement('div');
+                    nullPointer.className = 'pointer-null';
+                    
+                    if(type === 'pila') {
+                         // null at the bottom
+                         nullPointer.innerHTML = 'NULL';
+                    } else {
+                        nullPointer.innerHTML = '→ NULL';
+                    }
+                    wrapper.appendChild(nullPointer);
+                }
+
+                visualization.appendChild(wrapper);
+            });
+        }
+
+        // Status Toast
+        let statusTimeout;
+        function showStatus(msg, isError = false) {
+            statusBar.textContent = msg;
+            statusBar.style.color = isError ? 'var(--danger)' : 'var(--text-muted)';
+            statusBar.classList.add('show');
+            
+            clearTimeout(statusTimeout);
+            statusTimeout = setTimeout(() => {
+                statusBar.classList.remove('show');
+            }, 3000);
+        }
+
+        // Init
+        updateUI();
+
+        // Keyboard listener for adding
+        nameInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                btnAdd.click();
+            }
+        });
+    </script>
+</body>
+</html>
